@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Bozzo IPTV Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 1em;
+    }
+    video {
+      width: 100%;
+      height: auto;
+      background: #000;
+    }
+    select {
+      width: 90%;
+      padding: 0.5em;
+      font-size: 1em;
+      margin-bottom: 1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>📺 IPTV - Bozzo</h1>
+  <select id="channelSelector">
+    <option value="">Caricamento canali...</option>
+  </select>
+  <video id="videoPlayer" controls autoplay></video>
+
+  <script>
+    const m3uUrl = "http://gjr6ft.Caristori.com:80/get.php?username=Piste661&password=Posa661&type=m3u&output=m3u8";
+
+    async function parseM3U(url) {
+      const res = await fetch(url);
+      const text = await res.text();
+      const lines = text.split('\n');
+      const channels = [];
+      let name = '', streamUrl = '';
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('#EXTINF')) {
+          name = lines[i].split(',').pop();
+        } else if (lines[i].startsWith('http')) {
+          streamUrl = lines[i].trim();
+          channels.push({ name, url: streamUrl });
+        }
+      }
+      return channels;
+    }
+
+    async function initPlayer() {
+      const selector = document.getElementById('channelSelector');
+      const player = document.getElementById('videoPlayer');
+      const channels = await parseM3U(m3uUrl);
+
+      selector.innerHTML = '';
+      channels.forEach((ch, idx) => {
+        const opt = document.createElement('option');
+        opt.value = ch.url;
+        opt.textContent = ch.name;
+        if (idx === 0) opt.selected = true;
+        selector.appendChild(opt);
+      });
+
+      player.src = channels[0].url;
+
+      selector.addEventListener('change', () => {
+        player.src = selector.value;
+        player.play();
+      });
+    }
+
+    initPlayer().catch(err => {
+      document.body.innerHTML = "<p>Errore nel caricamento della lista IPTV.</p>";
+      console.error(err);
+    });
+  </script>
+</body>
+</html>
